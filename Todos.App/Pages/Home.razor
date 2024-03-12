@@ -1,0 +1,73 @@
+﻿@page "/"
+<PageTitle>Todos</PageTitle>
+
+<h3>To-do</h3>
+
+@if(tf.Get() is not null)
+{
+    <div class="input-group w-25 mb-3">
+        <input type="text" @bind="description" class="form-control" placeholder="Enter a to-do description" />
+        <button class="btn btn-outline-success" @onclick="Add">Add</button>
+    </div>
+
+    @if(error.Length > 0)
+    {
+        <div class="alert alert-danger alert-dismissible w-25 mb-3">
+            <strong>Error! @error</strong>
+            <button type="button" class="btn-close" @onclick="HideError"></button>
+        </div>
+    }
+
+    <ul class="list-group w-25 mb-3">
+        @foreach(var todo in tf.Get())
+        {
+            <li class="list-group-item d-flex align-items-center justify-content-between">
+            <div>
+                    <input id="@todo.Id" type="checkbox" @onchange="@(e => Update(e.Value.ToBool(), todo))" class="form-check-input" checked="@todo.Completed" />
+                <label for="@todo.Id" class="form-check-label @(todo.Completed ? "completed" : "")">@todo.Description</label>
+            </div>
+            <input type="button" value="Delete" class="btn btn-sm btn-outline-danger"
+                       @onclick="@(e => Delete(todo))" />
+            </li>
+        }
+    
+    </ul>
+}
+
+
+@code{
+    string description = string.Empty;
+    string error = string.Empty;
+
+    TodoFactory tf = new();
+
+    void HideError() => error = string.Empty;
+
+    void Update(bool completed, Todo todo) {
+        HideError();
+        if(!tf.Update(completed, todo))
+        {
+            error = "Couldn't update todo";
+        }
+    }
+
+    void Delete(Todo todo) 
+    {
+        HideError();
+        tf.Delete(todo);
+    }
+
+    void Add() {
+        try
+        {
+            tf.Add(description);
+            description = string.Empty;
+        } catch(ArgumentException ex)
+        {
+            error = ex.Message;
+        } catch
+        {
+            error = "Couldn't add the todo";
+        }
+    }
+}
